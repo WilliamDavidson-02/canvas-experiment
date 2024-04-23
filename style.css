@@ -12,4 +12,34 @@ body {
 canvas {
   position: fixed;
   inset: 0;
+  z-index: -1;
+}
+
+.container {
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  background-color: white;
+  width: fit-content;
+  margin: 1rem auto 0 auto;
+}
+
+.flex-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+}
+
+.btn {
+  outline: none;
+  cursor: pointer;
+  border: none;
+  border-radius: 0.25rem;
+  background-color: rgb(230, 230, 230);
+  padding: 0.5rem;
+}
+
+.selected {
+  background-color: rgb(79, 170, 249);
+  color: white;
 }
