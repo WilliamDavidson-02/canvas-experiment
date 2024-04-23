@@ -1,14 +1,13 @@
 import rough from "roughjs";
-import { createElement } from "./util";
+import { createElement, getElementAtPosition } from "./util";
 
 const canvas = document.querySelector("#canvas");
 const controlBtns = document.querySelectorAll("#element-control");
 
-let initPosition = null;
 let mouse = {};
 let isDrawing = false;
 let elements = [];
-let elementType = "line";
+let tool = "selection";
 
 const toggleElementBtns = (type) => {
   if (!controlBtns) return;
@@ -26,7 +25,7 @@ const toggleElementBtns = (type) => {
 const handleElementType = (btn) => {
   const type = btn.getAttribute("data-element");
 
-  elementType = type;
+  tool = type;
 
   toggleElementBtns(type);
 };
@@ -42,12 +41,17 @@ const handleMouseMove = ({ clientX, clientY }) => {
 
   if (!isDrawing) return;
 
+  const index = elements.length - 1;
+
   // create a element with inital x,y 1 and x,y 2 with mosue current position
-  const position = [initPosition.x, initPosition.y, clientX, clientY];
-  const element = createElement(elementType, position, { stroke: "white" });
+  const { x1, y1 } = elements[index];
+  const element = createElement(tool, x1, y1, clientX, clientY, {
+    stroke: "white",
+  });
+
+  if (!element) return;
 
   // Replace old element with new
-  const index = elements.length - 1;
   elements.splice(index, 1, element);
 };
 
@@ -55,18 +59,28 @@ const handleMouseDown = (ev) => {
   const { clientX, clientY, target } = ev;
 
   if (target.nodeName !== "CANVAS") return;
-  isDrawing = true;
 
-  initPosition = { x: clientX, y: clientY };
+  if (tool === "selection") {
+    const element = getElementAtPosition(clientX, clientY, elements);
 
-  const position = [clientX, clientY, clientX, clientY];
-  const element = createElement(elementType, position, { stroke: "white" });
-  elements.push(element);
+    if (!element) return;
+
+    console.log(element);
+  } else {
+    isDrawing = true;
+
+    const element = createElement(tool, clientX, clientY, clientX, clientY, {
+      stroke: "white",
+    });
+
+    if (!element) return;
+
+    elements.push(element);
+  }
 };
 
 const handleMouseUp = () => {
   isDrawing = false;
-  initPosition = null;
 };
 
 const draw = () => {
@@ -77,13 +91,13 @@ const draw = () => {
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  elements.forEach((element) => rc.draw(element));
+  elements.forEach(({ element }) => rc.draw(element));
   requestAnimationFrame(draw);
 };
 
 const init = () => {
   handleWindowSize();
-  toggleElementBtns(elementType);
+  toggleElementBtns(tool);
   requestAnimationFrame(draw);
 };
 
