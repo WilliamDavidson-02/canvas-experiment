@@ -1,5 +1,5 @@
 import rough from "roughjs";
-import { createElement, getElementAtPosition } from "./util";
+import { createElement, getElementAtPosition, updateElement } from "./util";
 
 const canvas = document.querySelector("#canvas");
 const controlBtns = document.querySelectorAll("#element-control");
@@ -7,7 +7,9 @@ const controlBtns = document.querySelectorAll("#element-control");
 let mouse = {};
 let isDrawing = false;
 let elements = [];
+let selectedElement = null;
 let tool = "selection";
+let action = null;
 
 const toggleElementBtns = (type) => {
   if (!controlBtns) return;
@@ -27,6 +29,12 @@ const handleElementType = (btn) => {
 
   tool = type;
 
+  if (type === "selection") {
+    action = "move";
+  } else if (["line", "rectangle"].includes(type)) {
+    action = "drawing";
+  }
+
   toggleElementBtns(type);
 };
 
@@ -41,18 +49,35 @@ const handleMouseMove = ({ clientX, clientY }) => {
 
   if (!isDrawing) return;
 
-  const index = elements.length - 1;
+  if (action === "drawing") {
+    const index = elements.length - 1;
 
-  // create a element with inital x,y 1 and x,y 2 with mosue current position
-  const { x1, y1 } = elements[index];
-  const element = createElement(tool, x1, y1, clientX, clientY, {
-    stroke: "white",
-  });
+    // create a element with inital x,y 1 and x,y 2 with mosue current position
+    const { x1, y1, id } = elements[index];
+    const cords = { x1, y1, x2: clientX, y2: clientY };
+    const element = createElement(id, cords, tool, { stroke: "white" });
 
-  if (!element) return;
+    if (!element) return;
 
-  // Replace old element with new
-  elements.splice(index, 1, element);
+    // Replace old element with new
+    elements.splice(index, 1, element);
+  } else if (action === "moving") {
+    const { x1, y1, x2, y2, type, offsetX, offsetY, id } = selectedElement;
+
+    const width = x2 - x1;
+    const height = y2 - y1;
+    const newX1 = clientX - offsetX;
+    const newY1 = clientY - offsetY;
+
+    const cords = {
+      x1: newX1,
+      y1: newY1,
+      x2: newX1 + width,
+      y2: newY1 + height,
+    };
+
+    elements = updateElement(id, cords, type, { stroke: "white" }, elements);
+  }
 };
 
 const handleMouseDown = (ev) => {
@@ -60,27 +85,33 @@ const handleMouseDown = (ev) => {
 
   if (target.nodeName !== "CANVAS") return;
 
+  isDrawing = true;
+
   if (tool === "selection") {
     const element = getElementAtPosition(clientX, clientY, elements);
 
     if (!element) return;
 
-    console.log(element);
+    const offsetX = clientX - element.x1;
+    const offsetY = clientY - element.y1;
+    selectedElement = { ...element, offsetX, offsetY };
+
+    if (element.position === "inside") {
+      action = "moving";
+    }
   } else {
-    isDrawing = true;
+    const id = elements.length;
+    const cords = { x1: clientX, y1: clientY, x2: clientX, y2: clientY };
+    const element = createElement(id, cords, tool, { stroke: "white" });
 
-    const element = createElement(tool, clientX, clientY, clientX, clientY, {
-      stroke: "white",
-    });
-
-    if (!element) return;
-
-    elements.push(element);
+    if (element) elements.push(element);
+    action = "drawing";
   }
 };
 
 const handleMouseUp = () => {
   isDrawing = false;
+  action = null;
 };
 
 const draw = () => {

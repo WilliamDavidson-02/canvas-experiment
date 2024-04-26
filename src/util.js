@@ -2,7 +2,8 @@ import rough from "roughjs";
 
 const generator = rough.generator();
 
-export const createElement = (type, x1, y1, x2, y2, options = {}) => {
+export const createElement = (id, cords, type, options = {}) => {
+  const { x1, y1, x2, y2 } = cords;
   let newElement = null;
 
   if (type === "line") {
@@ -13,7 +14,7 @@ export const createElement = (type, x1, y1, x2, y2, options = {}) => {
     newElement = generator.rectangle(x1, y1, x2 - x1, y2 - y1, options);
   }
 
-  return { type, x1, y1, x2, y2, element: newElement };
+  return { id, type, x1, y1, x2, y2, element: newElement };
 };
 
 const distance = (a, b) =>
@@ -64,4 +65,14 @@ export const getElementAtPosition = (x, y, elements) => {
     .find((element) => element.position !== null);
 
   return element;
+};
+
+export const updateElement = (id, cords, type, options, elements) => {
+  const elementsCopy = [...elements];
+
+  if (["line", "rectangle"].includes(type)) {
+    elementsCopy[id] = createElement(id, cords, type, options);
+  }
+
+  return elementsCopy;
 };
