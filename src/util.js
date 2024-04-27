@@ -76,3 +76,14 @@ export const updateElement = (id, cords, type, options, elements) => {
 
   return elementsCopy;
 };
+
+export const createMarquee = (x1, y1, x2, y2) => {
+  const element = generator.rectangle(x1, y1, x2 - x1, y2 - y1, {
+    roughness: 0,
+    fill: "rgba(255, 255, 255, 0.1)",
+    fillStyle: "solid",
+    stroke: "rgb(79, 170, 249)",
+  });
+
+  return { element, x1, y1, x2, y2 };
+};

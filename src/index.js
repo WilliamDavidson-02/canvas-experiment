@@ -1,5 +1,10 @@
 import rough from "roughjs";
-import { createElement, getElementAtPosition, updateElement } from "./util";
+import {
+  createElement,
+  createMarquee,
+  getElementAtPosition,
+  updateElement,
+} from "./util";
 
 const canvas = document.querySelector("#canvas");
 const controlBtns = document.querySelectorAll("#element-control");
@@ -10,6 +15,7 @@ let elements = [];
 let selectedElement = null;
 let tool = "selection";
 let action = null;
+let marquee = null;
 
 const toggleElementBtns = (type) => {
   if (!controlBtns) return;
@@ -77,6 +83,9 @@ const handleMouseMove = ({ clientX, clientY }) => {
     };
 
     elements = updateElement(id, cords, type, { stroke: "white" }, elements);
+  } else if (action === "marquee") {
+    const { x1, y1 } = marquee;
+    marquee = createMarquee(x1, y1, clientX, clientY);
   }
 };
 
@@ -90,7 +99,11 @@ const handleMouseDown = (ev) => {
   if (tool === "selection") {
     const element = getElementAtPosition(clientX, clientY, elements);
 
-    if (!element) return;
+    if (!element) {
+      action = "marquee";
+      marquee = createMarquee(clientX, clientY, clientX, clientY);
+      return;
+    }
 
     const offsetX = clientX - element.x1;
     const offsetY = clientY - element.y1;
@@ -111,7 +124,7 @@ const handleMouseDown = (ev) => {
 
 const handleMouseUp = () => {
   isDrawing = false;
-  action = null;
+  action = marquee = null;
 };
 
 const draw = () => {
@@ -123,6 +136,9 @@ const draw = () => {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   elements.forEach(({ element }) => rc.draw(element));
+
+  if (marquee) rc.draw(marquee.element);
+
   requestAnimationFrame(draw);
 };
 
