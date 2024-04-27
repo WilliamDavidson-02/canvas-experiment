@@ -3,6 +3,8 @@ import {
   createElement,
   createMarquee,
   getElementAtPosition,
+  isElementSelected,
+  setElementOffset,
   updateElement,
 } from "./util";
 
@@ -12,7 +14,7 @@ const controlBtns = document.querySelectorAll("#element-control");
 let mouse = {};
 let isDrawing = false;
 let elements = [];
-let selectedElement = null;
+let selectedElements = [];
 let tool = "selection";
 let action = null;
 let marquee = null;
@@ -68,21 +70,31 @@ const handleMouseMove = ({ clientX, clientY }) => {
     // Replace old element with new
     elements.splice(index, 1, element);
   } else if (action === "moving") {
-    const { x1, y1, x2, y2, type, offsetX, offsetY, id } = selectedElement;
+    selectedElements.forEach((selectedElement, index) => {
+      const { x1, y1, x2, y2, type, offsetX, offsetY, id } = selectedElement;
 
-    const width = x2 - x1;
-    const height = y2 - y1;
-    const newX1 = clientX - offsetX;
-    const newY1 = clientY - offsetY;
+      const width = x2 - x1;
+      const height = y2 - y1;
+      const newX1 = clientX - offsetX;
+      const newY1 = clientY - offsetY;
 
-    const cords = {
-      x1: newX1,
-      y1: newY1,
-      x2: newX1 + width,
-      y2: newY1 + height,
-    };
+      const cords = {
+        x1: newX1,
+        y1: newY1,
+        x2: newX1 + width,
+        y2: newY1 + height,
+      };
 
-    elements = updateElement(id, cords, type, { stroke: "white" }, elements);
+      const updatedElement = updateElement(
+        id,
+        cords,
+        type,
+        { stroke: "white" },
+        selectedElement
+      );
+
+      elements[id] = selectedElement[index] = updatedElement;
+    });
   } else if (action === "marquee") {
     const { x1, y1 } = marquee;
     marquee = createMarquee(x1, y1, clientX, clientY);
@@ -90,7 +102,7 @@ const handleMouseMove = ({ clientX, clientY }) => {
 };
 
 const handleMouseDown = (ev) => {
-  const { clientX, clientY, target } = ev;
+  const { clientX, clientY, target, shiftKey } = ev;
 
   if (target.nodeName !== "CANVAS") return;
 
@@ -100,14 +112,39 @@ const handleMouseDown = (ev) => {
     const element = getElementAtPosition(clientX, clientY, elements);
 
     if (!element) {
+      selectedElements = [];
       action = "marquee";
       marquee = createMarquee(clientX, clientY, clientX, clientY);
       return;
     }
 
-    const offsetX = clientX - element.x1;
-    const offsetY = clientY - element.y1;
-    selectedElement = { ...element, offsetX, offsetY };
+    const offsets = setElementOffset(element, clientX, clientY);
+    const selected = { ...element, ...offsets };
+    const isSelected = isElementSelected(selectedElements, element);
+
+    const updateSelectedOffset = () => {
+      return selectedElements.map((element) => {
+        const { offsetX, offsetY } = setElementOffset(
+          elements[element.id],
+          clientX,
+          clientY
+        );
+
+        return { ...element, offsetX, offsetY };
+      });
+    };
+
+    if (!isSelected) {
+      if (shiftKey) {
+        selectedElements = updateSelectedOffset();
+
+        selectedElements.push(selected);
+      } else {
+        selectedElements = [selected];
+      }
+    } else {
+      selectedElements = updateSelectedOffset();
+    }
 
     if (element.position === "inside") {
       action = "moving";

@@ -67,14 +67,12 @@ export const getElementAtPosition = (x, y, elements) => {
   return element;
 };
 
-export const updateElement = (id, cords, type, options, elements) => {
-  const elementsCopy = [...elements];
-
+export const updateElement = (id, cords, type, options, element) => {
   if (["line", "rectangle"].includes(type)) {
-    elementsCopy[id] = createElement(id, cords, type, options);
+    element = createElement(id, cords, type, options);
   }
 
-  return elementsCopy;
+  return element;
 };
 
 export const createMarquee = (x1, y1, x2, y2) => {
@@ -86,4 +84,15 @@ export const createMarquee = (x1, y1, x2, y2) => {
   });
 
   return { element, x1, y1, x2, y2 };
+};
+
+export const setElementOffset = (element, x, y) => {
+  const offsetX = x - element.x1;
+  const offsetY = y - element.y1;
+
+  return { offsetX, offsetY };
+};
+
+export const isElementSelected = (elements, target) => {
+  return elements.some((e) => e.id === target.id);
 };
