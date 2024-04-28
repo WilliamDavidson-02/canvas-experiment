@@ -2,6 +2,7 @@ import rough from "roughjs";
 import {
   createElement,
   createMarquee,
+  createSelectionIndicator,
   getElementAtPosition,
   isElementSelected,
   setElementOffset,
@@ -41,9 +42,20 @@ const handleElementType = (btn) => {
     action = "move";
   } else if (["line", "rectangle"].includes(type)) {
     action = "drawing";
+    selectedElements = [];
   }
 
   toggleElementBtns(type);
+};
+
+const handleKeyDown = ({ key }) => {
+  if (!isNaN(key)) {
+    const btn = controlBtns[Number(key) - 1];
+
+    if (!btn) return;
+
+    handleElementType(btn);
+  }
 };
 
 const handleWindowSize = () => {
@@ -93,7 +105,13 @@ const handleMouseMove = ({ clientX, clientY }) => {
         selectedElement
       );
 
-      elements[id] = selectedElement[index] = updatedElement;
+      elements[id] = updatedElement;
+
+      const indicator = createSelectionIndicator(...Object.values(cords));
+      selectedElements[index].indicator = indicator;
+      Object.keys(cords).map((key) => {
+        return (selectedElements[index][key] = cords[key]);
+      });
     });
   } else if (action === "marquee") {
     const { x1, y1 } = marquee;
@@ -119,11 +137,16 @@ const handleMouseDown = (ev) => {
     }
 
     const offsets = setElementOffset(element, clientX, clientY);
-    const selected = { ...element, ...offsets };
+    const { x1, y1, x2, y2 } = element;
+    const indicator = createSelectionIndicator(x1, y1, x2, y2);
+    let selected = { ...element, ...offsets, indicator };
     const isSelected = isElementSelected(selectedElements, element);
 
     const updateSelectedOffset = () => {
       return selectedElements.map((element) => {
+        const { x1, y1, x2, y2 } = element;
+        const indicator = createSelectionIndicator(x1, y1, x2, y2);
+
         const { offsetX, offsetY } = setElementOffset(
           elements[element.id],
           clientX,
@@ -173,6 +196,7 @@ const draw = () => {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   elements.forEach(({ element }) => rc.draw(element));
+  selectedElements.forEach(({ indicator }) => rc.draw(indicator));
 
   if (marquee) rc.draw(marquee.element);
 
@@ -191,6 +215,7 @@ window.addEventListener("mousemove", handleMouseMove);
 window.addEventListener("mousedown", handleMouseDown);
 window.addEventListener("mouseup", handleMouseUp);
 
+window.addEventListener("keydown", handleKeyDown);
 controlBtns.forEach((btn) => {
   btn.addEventListener("click", () => handleElementType(btn));
 });

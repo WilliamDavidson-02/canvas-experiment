@@ -76,14 +76,38 @@ export const updateElement = (id, cords, type, options, element) => {
 };
 
 export const createMarquee = (x1, y1, x2, y2) => {
-  const element = generator.rectangle(x1, y1, x2 - x1, y2 - y1, {
+  const options = {
     roughness: 0,
     fill: "rgba(255, 255, 255, 0.1)",
     fillStyle: "solid",
     stroke: "rgb(79, 170, 249)",
-  });
+  };
+
+  const element = generator.rectangle(x1, y1, x2 - x1, y2 - y1, options);
 
   return { element, x1, y1, x2, y2 };
+};
+
+export const createSelectionIndicator = (x1, y1, x2, y2, padding = 8) => {
+  const newX1 = x1 - padding;
+  const newY1 = y1 - padding;
+  const newX2 = x2 + padding;
+  const newY2 = y2 + padding;
+
+  const options = {
+    roughness: 0,
+    stroke: "rgb(79, 170, 249)",
+  };
+
+  const selectionIndicator = generator.rectangle(
+    newX1,
+    newY1,
+    newX2 - newX1,
+    newY2 - newY1,
+    options
+  );
+
+  return selectionIndicator;
 };
 
 export const setElementOffset = (element, x, y) => {
