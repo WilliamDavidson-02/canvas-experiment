@@ -5,6 +5,7 @@ import {
   createSelectionIndicator,
   getElementAtPosition,
   isElementSelected,
+  selectMarquee,
   setElementOffset,
   updateElement,
 } from "./util";
@@ -116,6 +117,10 @@ const handleMouseMove = ({ clientX, clientY }) => {
   } else if (action === "marquee") {
     const { x1, y1 } = marquee;
     marquee = createMarquee(x1, y1, clientX, clientY);
+
+    if (!elements.length) return;
+
+    selectedElements = selectMarquee(marquee, elements);
   }
 };
 
@@ -144,11 +149,8 @@ const handleMouseDown = (ev) => {
 
     const updateSelectedOffset = () => {
       return selectedElements.map((element) => {
-        const { x1, y1, x2, y2 } = element;
-        const indicator = createSelectionIndicator(x1, y1, x2, y2);
-
         const { offsetX, offsetY } = setElementOffset(
-          elements[element.id],
+          element,
           clientX,
           clientY
         );

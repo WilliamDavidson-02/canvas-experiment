@@ -88,6 +88,35 @@ export const createMarquee = (x1, y1, x2, y2) => {
   return { element, x1, y1, x2, y2 };
 };
 
+const isInBounds = (x1, y1, x2, y2, element) => {
+  const x = x1 <= element.x1 && x2 >= element.x2;
+  const y = y1 <= element.y1 && y2 >= element.y2;
+
+  return x && y;
+};
+
+export const selectMarquee = (marquee, elements) => {
+  const x1 = Math.min(marquee.x1, marquee.x2);
+  const y1 = Math.min(marquee.y1, marquee.y2);
+  const x2 = Math.max(marquee.x2, marquee.x1);
+  const y2 = Math.max(marquee.y2, marquee.y1);
+
+  let selectedElements = elements.filter((element) =>
+    isInBounds(x1, y1, x2, y2, element)
+  );
+
+  selectedElements = selectedElements.map((element) => {
+    const { x1, y1, x2, y2 } = element;
+    const indicator = createSelectionIndicator(x1, y1, x2, y2);
+
+    element.indicator = indicator;
+
+    return element;
+  });
+
+  return selectedElements;
+};
+
 export const createSelectionIndicator = (x1, y1, x2, y2, padding = 8) => {
   const newX1 = x1 - padding;
   const newY1 = y1 - padding;
