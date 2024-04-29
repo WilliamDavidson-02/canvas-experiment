@@ -228,7 +228,13 @@ const draw = () => {
   selectedElements.forEach(({ indicator }) => rc.draw(indicator));
 
   if (marquee) rc.draw(marquee.element);
-  if (selectionHandle) rc.draw(selectionHandle.border);
+
+  if (selectionHandle) {
+    const { border, handles } = selectionHandle;
+
+    rc.draw(border);
+    handles.forEach(({ handle }) => rc.draw(handle));
+  }
 
   requestAnimationFrame(draw);
 };

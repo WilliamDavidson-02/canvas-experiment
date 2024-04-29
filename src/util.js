@@ -143,6 +143,28 @@ const getAxisValues = (axis, elements) => {
   return elements.map((e) => e[axis]);
 };
 
+const createHandle = (x, y, position, width = 6) => {
+  const newX1 = x - width;
+  const newY1 = y - width;
+  const newX2 = x + width;
+  const newY2 = y + width;
+
+  const handle = generator.rectangle(
+    newX1,
+    newY1,
+    newX2 - newX1,
+    newY2 - newY1,
+    {
+      roughness: 0,
+      stroke: "rgb(79, 170, 249)",
+      fill: "rgb(20, 20, 20)",
+      fillStyle: "solid",
+    }
+  );
+
+  return { handle, position, x1: newX1, y1: newY1, x2: newX2, y2: newY2 };
+};
+
 export const createSelectionHandles = (elements, padding = 8) => {
   const x1 = Math.min(...getAxisValues("x1", elements));
   const y1 = Math.min(...getAxisValues("y1", elements));
@@ -167,7 +189,24 @@ export const createSelectionHandles = (elements, padding = 8) => {
     }
   );
 
+  const topLeft = createHandle(newX1, newY1, "tl");
+  const topRight = createHandle(newX2, newY1, "tr");
+  const bottomLeft = createHandle(newX1, newY2, "bl");
+  const bottomRight = createHandle(newX2, newY2, "br");
+
+  let handles = [topLeft, topRight, bottomLeft, bottomRight];
+
+  if (elements.length === 1) {
+    const topCenter = createHandle(newX1 + (newX2 - newX1) / 2, newY1, "tc");
+    const rightCenter = createHandle(newX2, newY1 + (newY2 - newY1) / 2, "rc");
+    const bottomCenter = createHandle(newX1 + (newX2 - newX1) / 2, newY2, "bc");
+    const leftCenter = createHandle(newX1, newY1 + (newY2 - newY1) / 2, "lc");
+
+    handles = [...handles, topCenter, rightCenter, bottomCenter, leftCenter];
+  }
+
   return {
+    handles,
     border,
     x1: newX1,
     y1: newY1,
