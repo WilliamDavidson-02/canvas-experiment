@@ -35,7 +35,7 @@ const nearPoint = (x, y, x1, y1, name) => {
   return Math.abs(x - x1) < 5 && Math.abs(y - y1) < 5 ? name : null;
 };
 
-const positionWithinElement = (x, y, element) => {
+export const positionWithinElement = (x, y, element) => {
   const { type, x1, y1, x2, y2 } = element;
 
   if (type === "line") {
@@ -137,6 +137,44 @@ export const createSelectionIndicator = (x1, y1, x2, y2, padding = 8) => {
   );
 
   return selectionIndicator;
+};
+
+const getAxisValues = (axis, elements) => {
+  return elements.map((e) => e[axis]);
+};
+
+export const createSelectionHandles = (elements, padding = 8) => {
+  const x1 = Math.min(...getAxisValues("x1", elements));
+  const y1 = Math.min(...getAxisValues("y1", elements));
+  const x2 = Math.max(...getAxisValues("x2", elements));
+  const y2 = Math.max(...getAxisValues("y2", elements));
+
+  const newX1 = x1 - padding;
+  const newY1 = y1 - padding;
+  const newX2 = x2 + padding;
+  const newY2 = y2 + padding;
+
+  const border = generator.rectangle(
+    newX1,
+    newY1,
+    newX2 - newX1,
+    newY2 - newY1,
+    {
+      roughness: 0,
+      stroke: "rgb(79, 170, 249)",
+      strokeLineDash: [5],
+      strokeWidth: 0.3,
+    }
+  );
+
+  return {
+    border,
+    x1: newX1,
+    y1: newY1,
+    x2: newX2,
+    y2: newY2,
+    type: "rectangle",
+  };
 };
 
 export const setElementOffset = (element, x, y) => {

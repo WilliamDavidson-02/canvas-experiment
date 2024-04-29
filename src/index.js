@@ -2,9 +2,11 @@ import rough from "roughjs";
 import {
   createElement,
   createMarquee,
+  createSelectionHandles,
   createSelectionIndicator,
   getElementAtPosition,
   isElementSelected,
+  positionWithinElement,
   selectMarquee,
   setElementOffset,
   updateElement,
@@ -20,6 +22,7 @@ let selectedElements = [];
 let tool = "selection";
 let action = null;
 let marquee = null;
+let selectionHandle = null;
 
 const toggleElementBtns = (type) => {
   if (!controlBtns) return;
@@ -44,6 +47,7 @@ const handleElementType = (btn) => {
   } else if (["line", "rectangle"].includes(type)) {
     action = "drawing";
     selectedElements = [];
+    selectionHandle = null;
   }
 
   toggleElementBtns(type);
@@ -113,6 +117,7 @@ const handleMouseMove = ({ clientX, clientY }) => {
       Object.keys(cords).map((key) => {
         return (selectedElements[index][key] = cords[key]);
       });
+      selectionHandle = createSelectionHandles(selectedElements);
     });
   } else if (action === "marquee") {
     const { x1, y1 } = marquee;
@@ -121,11 +126,50 @@ const handleMouseMove = ({ clientX, clientY }) => {
     if (!elements.length) return;
 
     selectedElements = selectMarquee(marquee, elements);
+    selectionHandle = createSelectionHandles(selectedElements);
+  }
+};
+
+const setSelectedOffset = (elements, x, y) => {
+  if (elements.length) {
+    return elements.map((element) => {
+      const { offsetX, offsetY } = setElementOffset(element, x, y);
+
+      return { ...element, offsetX, offsetY };
+    });
+  }
+
+  const element = elements;
+  const { offsetX, offsetY } = setElementOffset(element, x, y);
+
+  return { ...element, offsetX, offsetY };
+};
+
+const setSelectedElements = (ev, element) => {
+  const { x1, y1, x2, y2 } = element;
+  const { clientX, clientY, shiftKey } = ev;
+
+  const indicator = createSelectionIndicator(x1, y1, x2, y2);
+  let selected = setSelectedOffset(element, clientX, clientY);
+  selected.indicator = indicator;
+
+  const isSelected = isElementSelected(selectedElements, element);
+
+  if (!isSelected) {
+    if (shiftKey) {
+      selectedElements = setSelectedOffset(selectedElements, clientX, clientY);
+
+      selectedElements.push(selected);
+    } else {
+      selectedElements = [selected];
+    }
+  } else {
+    selectedElements = setSelectedOffset(selectedElements, clientX, clientY);
   }
 };
 
 const handleMouseDown = (ev) => {
-  const { clientX, clientY, target, shiftKey } = ev;
+  const { clientX, clientY, target } = ev;
 
   if (target.nodeName !== "CANVAS") return;
 
@@ -133,47 +177,30 @@ const handleMouseDown = (ev) => {
 
   if (tool === "selection") {
     const element = getElementAtPosition(clientX, clientY, elements);
+    const handle = selectionHandle
+      ? getElementAtPosition(clientX, clientY, [selectionHandle])
+      : null;
 
-    if (!element) {
+    if (!element && !handle) {
       selectedElements = [];
+      selectionHandle = null;
       action = "marquee";
       marquee = createMarquee(clientX, clientY, clientX, clientY);
       return;
     }
 
-    const offsets = setElementOffset(element, clientX, clientY);
-    const { x1, y1, x2, y2 } = element;
-    const indicator = createSelectionIndicator(x1, y1, x2, y2);
-    let selected = { ...element, ...offsets, indicator };
-    const isSelected = isElementSelected(selectedElements, element);
-
-    const updateSelectedOffset = () => {
-      return selectedElements.map((element) => {
-        const { offsetX, offsetY } = setElementOffset(
-          element,
-          clientX,
-          clientY
-        );
-
-        return { ...element, offsetX, offsetY };
-      });
-    };
-
-    if (!isSelected) {
-      if (shiftKey) {
-        selectedElements = updateSelectedOffset();
-
-        selectedElements.push(selected);
-      } else {
-        selectedElements = [selected];
-      }
+    if (element) {
+      setSelectedElements(ev, element);
     } else {
-      selectedElements = updateSelectedOffset();
+      selectedElements = setSelectedOffset(selectedElements, clientX, clientY);
     }
 
-    if (element.position === "inside") {
-      action = "moving";
-    }
+    selectionHandle = createSelectionHandles(selectedElements);
+
+    const isInsideElement = element ? element.position === "inside" : null;
+    const isInsideHandle = handle ? handle.position === "inside" : null;
+
+    if (isInsideElement || isInsideHandle) action = "moving";
   } else {
     const id = elements.length;
     const cords = { x1: clientX, y1: clientY, x2: clientX, y2: clientY };
@@ -201,6 +228,7 @@ const draw = () => {
   selectedElements.forEach(({ indicator }) => rc.draw(indicator));
 
   if (marquee) rc.draw(marquee.element);
+  if (selectionHandle) rc.draw(selectionHandle.border);
 
   requestAnimationFrame(draw);
 };
