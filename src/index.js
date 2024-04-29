@@ -1,16 +1,9 @@
 import rough from "roughjs";
-import {
-  createElement,
-  createMarquee,
-  createSelectionHandles,
-  createSelectionIndicator,
-  getElementAtPosition,
-  isElementSelected,
-  positionWithinElement,
-  selectMarquee,
-  setElementOffset,
-  updateElement,
-} from "./util";
+import { isElementSelected, setElementOffset } from "./util";
+import { createElement, updateElement } from "./elements";
+import { createSelectionIndicator, getElementAtPosition } from "./selection";
+import { createMarquee, selectMarquee } from "./marquee";
+import { createSelectionHandles } from "./handles";
 
 const canvas = document.querySelector("#canvas");
 const controlBtns = document.querySelectorAll("#element-control");
