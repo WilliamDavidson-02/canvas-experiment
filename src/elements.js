@@ -17,7 +17,7 @@ export const createElement = (id, cords, type, options = {}) => {
   return { id, type, x1, y1, x2, y2, element: newElement };
 };
 
-export const updateElement = (id, cords, type, options, element) => {
+export const updateElement = (id, cords, type, element, options = {}) => {
   if (["line", "rectangle"].includes(type)) {
     element = createElement(id, cords, type, options);
   }

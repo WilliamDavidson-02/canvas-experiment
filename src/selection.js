@@ -17,7 +17,7 @@ const onLine = (x1, y1, x2, y2, x, y, maxDistance = 1) => {
 };
 
 const nearPoint = (x, y, x1, y1, name) => {
-  return Math.abs(x - x1) < 5 && Math.abs(y - y1) < 5 ? name : null;
+  return Math.abs(x - x1) < 8 && Math.abs(y - y1) < 8 ? name : null;
 };
 
 export const positionWithinElement = (x, y, element) => {
@@ -33,8 +33,22 @@ export const positionWithinElement = (x, y, element) => {
     const topRight = nearPoint(x, y, x2, y1, "tr");
     const bottomLeft = nearPoint(x, y, x1, y2, "bl");
     const bottomRight = nearPoint(x, y, x2, y2, "br");
+    const top = nearPoint(x, y, x1 + (x2 - x1) / 2, y1, "tc");
+    const bottom = nearPoint(x, y, x1 + (x2 - x1) / 2, y2, "bc");
+    const left = nearPoint(x, y, x1, y2 - (y2 - y1) / 2, "lc");
+    const right = nearPoint(x, y, x2, y2 - (y2 - y1) / 2, "rc");
     const inside = x >= x1 && x <= x2 && y >= y1 && y <= y2 ? "inside" : null;
-    return topLeft || topRight || bottomLeft || bottomRight || inside;
+    return (
+      topLeft ||
+      topRight ||
+      bottomLeft ||
+      bottomRight ||
+      top ||
+      bottom ||
+      left ||
+      right ||
+      inside
+    );
   } else {
     throw new Error(`Type not recognised: ${type}`);
   }

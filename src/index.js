@@ -1,9 +1,10 @@
 import rough from "roughjs";
-import { isElementSelected, setElementOffset } from "./util";
+import { calcCords, isElementSelected, setElementOffset } from "./util";
 import { createElement, updateElement } from "./elements";
 import { createSelectionIndicator, getElementAtPosition } from "./selection";
 import { createMarquee, selectMarquee } from "./marquee";
 import { createSelectionHandles } from "./handles";
+import { resizeSingleElement } from "./resize";
 
 const canvas = document.querySelector("#canvas");
 const controlBtns = document.querySelectorAll("#element-control");
@@ -16,6 +17,7 @@ let tool = "selection";
 let action = null;
 let marquee = null;
 let selectionHandle = null;
+let selectedHandle = null;
 
 const toggleElementBtns = (type) => {
   if (!controlBtns) return;
@@ -83,25 +85,13 @@ const handleMouseMove = ({ clientX, clientY }) => {
     selectedElements.forEach((selectedElement, index) => {
       const { x1, y1, x2, y2, type, offsetX, offsetY, id } = selectedElement;
 
-      const width = x2 - x1;
-      const height = y2 - y1;
-      const newX1 = clientX - offsetX;
-      const newY1 = clientY - offsetY;
+      const data = { x1, y1, x2, y2, clientX, clientY, offsetX, offsetY };
 
-      const cords = {
-        x1: newX1,
-        y1: newY1,
-        x2: newX1 + width,
-        y2: newY1 + height,
-      };
+      const cords = calcCords(data);
 
-      const updatedElement = updateElement(
-        id,
-        cords,
-        type,
-        { stroke: "white" },
-        selectedElement
-      );
+      const updatedElement = updateElement(id, cords, type, selectedElement, {
+        stroke: "white",
+      });
 
       elements[id] = updatedElement;
 
@@ -120,6 +110,25 @@ const handleMouseMove = ({ clientX, clientY }) => {
 
     selectedElements = selectMarquee(marquee, elements);
     selectionHandle = createSelectionHandles(selectedElements);
+  } else if (action === "resizing" && selectedHandle) {
+    if (selectedElements.length === 1) {
+      const element = selectedElements[0];
+
+      const resizedElement = resizeSingleElement(
+        clientX,
+        clientY,
+        element,
+        selectedHandle.position
+      );
+
+      const { x1, y1, x2, y2 } = resizedElement;
+      selectionHandle = createSelectionHandles([resizedElement]);
+      const indicator = createSelectionIndicator(x1, y1, x2, y2);
+
+      elements[element.id] = resizedElement;
+      selectedElements[element.id] = resizedElement;
+      selectedElements[element.id].indicator = indicator;
+    }
   }
 };
 
@@ -193,7 +202,13 @@ const handleMouseDown = (ev) => {
     const isInsideElement = element ? element.position === "inside" : null;
     const isInsideHandle = handle ? handle.position === "inside" : null;
 
-    if (isInsideElement || isInsideHandle) action = "moving";
+    action = isInsideElement || isInsideHandle ? "moving" : "resizing";
+    if (isInsideElement || isInsideHandle) {
+      action = "moving";
+    } else {
+      action = "resizing";
+      selectedHandle = handle;
+    }
   } else {
     const id = elements.length;
     const cords = { x1: clientX, y1: clientY, x2: clientX, y2: clientY };
@@ -207,6 +222,7 @@ const handleMouseDown = (ev) => {
 const handleMouseUp = () => {
   isDrawing = false;
   action = marquee = null;
+  selectedHandle = null;
 };
 
 const draw = () => {
