@@ -35,3 +35,8 @@ export const calcCords = (data) => {
     y2: newY1 + height,
   };
 };
+
+export const getPadding = (a, b, padding) => {
+  // Gets padding direction
+  return a < b ? padding : -padding;
+};

@@ -1,5 +1,5 @@
 import rough from "roughjs";
-import { getAxisValues } from "./util";
+import { getAxisValues, getPadding } from "./util";
 
 const generator = rough.generator();
 
@@ -31,10 +31,10 @@ export const createSelectionHandles = (elements, padding = 8) => {
   const x2 = Math.max(...getAxisValues("x2", elements));
   const y2 = Math.max(...getAxisValues("y2", elements));
 
-  const newX1 = x1 - padding;
-  const newY1 = y1 - padding;
-  const newX2 = x2 + padding;
-  const newY2 = y2 + padding;
+  const newX1 = x1 + getPadding(x2, x1, padding);
+  const newY1 = y1 + getPadding(y2, y1, padding);
+  const newX2 = x2 + getPadding(x1, x2, padding);
+  const newY2 = y2 + getPadding(y1, y2, padding);
 
   const border = generator.rectangle(
     newX1,

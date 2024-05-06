@@ -1,4 +1,5 @@
 import rough from "roughjs";
+import { getPadding } from "./util";
 
 const generator = rough.generator();
 
@@ -67,10 +68,10 @@ export const getElementAtPosition = (x, y, elements) => {
 };
 
 export const createSelectionIndicator = (x1, y1, x2, y2, padding = 8) => {
-  const newX1 = x1 - padding;
-  const newY1 = y1 - padding;
-  const newX2 = x2 + padding;
-  const newY2 = y2 + padding;
+  const newX1 = x1 + getPadding(x2, x1, padding);
+  const newY1 = y1 + getPadding(y2, y1, padding);
+  const newX2 = x2 + getPadding(x1, x2, padding);
+  const newY2 = y2 + getPadding(y1, y2, padding);
 
   const options = {
     roughness: 0,
